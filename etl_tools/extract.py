@@ -1,5 +1,5 @@
-import pysam
 import pandas as pd
+import pysam
 
 VCF_DATA = 'GRCh38_latest_dbSNP_all.vcf.gz'
 
@@ -36,8 +36,7 @@ def vcf_slicer(chromosome, start, end) -> pd.DataFrame:
 
     return pd.DataFrame(chromos)
 
-
-def combine_chromos(chromo_range):
+def extract_vcf(chromo_range):
     """_summary_
 
     Args:
@@ -46,14 +45,40 @@ def combine_chromos(chromo_range):
     Returns:
         _type_: _description_
     """
+    
     chr_list = [vcf_slicer(i, 0, 50000) for i in chromo_range]
 
-    chr_list = pd.concat(chr_list)
-    chr_list = chr_list.drop(chr_list.iloc[:, [5, 6]], axis=1)
-    chr_list.columns = ["CHROM", "POS", "ID", "REF", "ALT", "INFO"]
-    chr_list["ALT"] = chr_list["ALT"].str.split(",")
-    chr_list = chr_list.explode("ALT")
-    chr_list["INFO"] = chr_list["INFO"].astype("string")
+    df = pd.concat(chr_list)
+    df = df.drop(df.iloc[:, [5, 6]], axis=1)
+    df.columns = ["CHROM", "POS", "ID", "REF", "ALT", "INFO"]
+    df["ALT"] = df["ALT"].str.split(",")
+    df = df.explode("ALT")
+    df["INFO"] = df["INFO"].astype("string")
 
-    return chr_list
+    return df
+
+def extract_gff3(filename):
+    """_summary_
+    Args:
+        filename (_type_): _description_
+    Returns:
+        _type_: _description_
+    """    
+    col_names = [
+    "seqid",
+    "source",
+    "type",
+    "start",
+    "end",
+    "score",
+    "strand",
+    "phase",
+    "attributes",
+    ]
+
+    return pd.read_csv('GRCh38_latest_genomic.gff.gz', 
+                        compression='gzip', sep='\t', 
+                        comment='#', low_memory=False, 
+                        header=None, 
+                        names=col_names)
 
