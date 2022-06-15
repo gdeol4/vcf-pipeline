@@ -92,9 +92,7 @@ def create_db(db_name, annotated_df):
 
     c.execute('SELECT DISTINCT Gene FROM variants')
 
-    rows = c.fetchall()
-
-    return rows
+    return c.fetchall()
 
 
 

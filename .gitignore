@@ -3,3 +3,4 @@ GRCh38_latest_genomic.gff.gz
 GRCh38_latest_dbSNP_all.vcf.gz
 *.pyc
 *.ipynb
+*.txt
