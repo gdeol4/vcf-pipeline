@@ -1,4 +1,5 @@
 from datetime import datetime
+from distutils.util import execute
 import sqlite3
 
 def log(message):
@@ -88,6 +89,12 @@ def create_db(db_name, annotated_df):
         print(e)
 
     annotated_df.to_sql('variants', conn, if_exists='replace' )
+
+    c.execute('SELECT DISTINCT Gene FROM variants')
+
+    rows = c.fetchall()
+
+    return rows
 
 
 
