@@ -23,46 +23,50 @@ db_name = 'variant.db'
 chr_range = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 
+def convert_df(df):
+   return df.to_csv().encode('utf-8')
 
+if st.button('slice vcf'):
+   with st.spinner('Running the slicer.. '):
 
-#if st.button('slice vcf'):
-#    with st.spinner('Running the slicer.. '):
-
-#        df = vcf_utils.vcf_slicer(input_chromosome, input_start, input_end)
+       df = vcf_utils.vcf_slicer(input_chromosome, input_start, input_end)
     
-#        st.write(df)
+       st.write(df)
 
     
 
 
-# if st.button('Run Pipeline'):
+if st.button('Run Pipeline'):
 
-#     load.log('ETL Job Started')
-#     st.write('ETL Job Started')
-#     load.log('Extract phase started')
-#     st.write('Extract phase started')
-#     vcf_raw = extract.extract_vcf(chr_range)
-#     gff_raw = extract.extract_gff3(gff_data)
-#     load.log('Extract phase ended')
-#     st.write('Extract phase ended')
-#     load.log('Transform phase started')
-#     st.write('Transform phase started')
-#     vcf_pre_processed = transform.vcf_gene_extract(vcf_raw)
-#     vcf_processed = transform.vcf_transform(vcf_pre_processed)
+    #load.log('ETL Job Started')
+    st.write('ETL Job Started')
+    load.log('Extract phase started')
+    st.write('Extract phase started')
+    vcf_raw = extract.extract_vcf(chr_range)
+    gff_raw = extract.extract_gff3(gff_data)
+    load.log('Extract phase ended')
 
-#     gff_processed = (gff_raw.pipe(transform.extract_attributes).
-#                              pipe(transform.process_attributes).
-#                              pipe(transform.remove_duplicates).
-#                              pipe(transform.append_accession))
+    load.log('Transform phase started')
+    st.write('Transform phase started')
+    vcf_pre_processed = transform.vcf_gene_extract(vcf_raw)
+    vcf_processed = transform.vcf_transform(vcf_pre_processed)
 
-#     load.log('Transform phase ended')
-#     st.write('Transform phase ended')
-#     load.log('Annotating VCF')
-#     st.write('Annotating VCF')
-#     vcf_annotated = transform.annotate_vcf(vcf_processed, gff_processed)
-#     load.log('ETL complete')
-#     st.write('ETL complete')
-#     st.write(vcf_annotated)
+    gff_processed = (gff_raw.pipe(transform.extract_attributes).
+                             pipe(transform.process_attributes).
+                             pipe(transform.remove_duplicates).
+                             pipe(transform.append_accession))
+
+    load.log('Transform phase ended')
+    load.log('Annotating VCF')
+    st.write('Annotating VCF')
+    vcf_annotated = transform.annotate_vcf(vcf_processed, gff_processed)
+    load.log('ETL complete')
+    st.write('ETL complete')
+    st.write(vcf_annotated)
+
+    convert_df(vcf_annotated)
+
+    
 
 if st.button('Run db'):
     db = load.create_db(db_name)
