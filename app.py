@@ -65,5 +65,5 @@ chr_range = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 #     st.write(vcf_annotated)
 
 if st.button('Run db'):
-    db = load.create_connection(db_name)
+    db = load.create_db(db_name)
     st.write(db)
