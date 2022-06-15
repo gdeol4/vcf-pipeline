@@ -71,8 +71,13 @@ def vcf_transform(df):
     return df.copy()
 
 def annotate_vcf(df1, df2):
+    df1['POS'] = df1['POS'].astype('int')
+    df1['len'] = df1.REF.str.len()
+    df1['start'] = df1['POS']
+    df1['end'] = df1['POS']+df1['len']-1
+    df1 = df1.drop(['len', 'POS'], axis = 1)
 
-    return pd.merge(df1, df2[['Accession', 'Gene']],on='Gene', how='left')
+    return pd.merge(df1, df2[['Accession', 'Gene', 'GeneID']],on='Gene', how='left')
 
 def extract_attributes(df):
     
@@ -118,10 +123,10 @@ def process_attributes(df):
     ndf["GeneID"] = ndf["GeneID"].str.replace(r'^[^:]*,*:', '', regex=True)
     ndf = ndf.drop(['score', 'phase', 'attributes', 'Dbxref', 'source'], axis = 1)
     df = df.drop(['score', 'phase', 'attributes', 'Dbxref', 'source'], axis = 1)
-
     df3 = pd.merge(ndf, df[['GeneID','Genbank', 'Parent']],on='GeneID', how='left')
     ndf = ndf.drop(['Parent', 'Genbank'], axis = 1)
     df3 = df3.drop(['Parent_x', 'Genbank_x'], axis = 1)
+
     df3.rename(columns = {'Parent_y':'Parent', 'Genbank_y':'Genbank'}, inplace = True)
     
     return df3
