@@ -13,6 +13,8 @@ Code refactoring was done using Sourcery and Autopep8 was used to ensure PEP8 fo
 ## Project structure:
 
 ## ETL Pipeline:
+![ETL](etl.png)
+
 
 ### Extract:
 
