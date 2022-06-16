@@ -29,6 +29,16 @@ def query_2(db_name):
     conn.close()
     return q2
 
+def query_3(db_name):
+
+    conn = sqlite3.connect(db_name)
+    c = conn.cursor()
+    results = c.execute('''SELECT CHROM, VC, COUNT(CHROM) FROM variant GROUP BY CHROM, VC;''')
+    q3 = pd.DataFrame(results.fetchall())
+    q3.columns = ['Chromosome', 'VC', 'Count']
+    conn.close()
+    return q3
+
 def query_4(db_name):
     conn = sqlite3.connect(db_name)
     c = conn.cursor()
