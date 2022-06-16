@@ -17,9 +17,12 @@ Code refactoring was done using Sourcery and Autopep8 was used to ensure PEP8 fo
 
 
 ### Extract:
+The pipeline is built using three modules that are aptly named: extract, transform, load
+
+The extraction phase calls to main functions to parse the data and to create pandas dataframes for both files
 
 ### Transform:
-
+The transformation phase formats the VCF first and then goes on create pandas dataframes for both files. The next part of the pipeline takes the gff dataframe as input into the pandas pipe, which is a group of functions that take the output of the preceeding function as their input.
 ### Load:
 
 ## Reproducing the project:
