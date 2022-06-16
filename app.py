@@ -96,7 +96,7 @@ with st.expander("Question 3: Most common variant type per chromosome"):
          I rolled actual dice for these, so they're *guaranteed* to
          be random.
      """)
-
+     st.write(sql_query.query_3(db_name))
 
 with st.expander("Question 4: Most common variant type overall"):
      st.write("""
