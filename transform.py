@@ -1,8 +1,6 @@
 import pandas as pd
 import re
 
-
-
 def vcf_transform(df):
 
     df = df.copy()
@@ -47,7 +45,7 @@ def vc_extract(info, df):
 
 def vcf_gene_extract(df):
 
-    df['Gene'] = df.INFO.apply(extract_rgene)
+    df['Gene'] = df.INFO.apply(extract_gene_tag)
     df['Gene'] = df['Gene'].str.replace(':(.*?)\|+', ',', regex=True)
     df['Gene'] = df['Gene'].str.replace(':.*$', '', regex=True)
     df = df.assign(Gene=df['Gene'].str.split(',')).explode('Gene')
@@ -58,7 +56,6 @@ def vcf_transform(df):
 
     df = df.copy()
     info = df['INFO']
-    #df = transform.vc_extract(info, df)
     df = vc_extract(info, df)
     df['Gene'] = df['Gene'].str.replace(':(.*?)\|+', ',', regex=True)
 
@@ -76,8 +73,9 @@ def annotate_vcf(df1, df2):
     df1['start'] = df1['POS']
     df1['end'] = df1['POS']+df1['len']-1
     df1 = df1.drop(['len', 'POS'], axis = 1)
-
-    return pd.merge(df1, df2[['Accession', 'Gene', 'GeneID']],on='Gene', how='left')
+    df1 = pd.merge(df1, df2[['Accession', 'Gene', 'GeneID']],on='Gene', how='left')
+    df1['Accession'] = df1['Accession'].astype(str)
+    return df1
 
 def extract_attributes(df):
     
@@ -175,7 +173,7 @@ def extract_gene(attributes_str):
     res = re_Gene.search(attributes_str)
     return '' if res is None else res['Gene']
     
-def extract_rgene(attributes_str):
-    re_rgene = re.compile('GENEINFO=(?P<gene>.+?);')
-    res = re_rgene.search(attributes_str)
+def extract_gene_tag(attributes_str):
+    re_gene_tag = re.compile('GENEINFO=(?P<gene>.+?);')
+    res = re_gene_tag.search(attributes_str)
     return '' if res is None else res['gene']

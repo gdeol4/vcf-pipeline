@@ -1,75 +1,11 @@
-from datetime import datetime
-from distutils.util import execute
 import sqlite3
-
-def log(message):
-    timestamp_format = '%H:%M:%S-%h-%d-%Y'
-    #Hour-Minute-Second-MonthName-Day-Year
-    now = datetime.now() # get current timestamp
-    timestamp = now.strftime(timestamp_format)
-    with open("etl_logfile.txt","a") as f:
-        f.write(f'{timestamp},{message}/n')
-
-# def create_connection(db_name):
-#     """ create a database connection to the SQLite database
-#         specified by db_file
-#     :param db_file: database file
-#     :return: Connection object or None
-#     """
-#     conn = None
-#     try:
-#         conn = sqlite3.connect(db_name)
-#         return conn
-#     except Error as e:
-#         print(e)
-
-#     return conn
-
-# def create_table(conn, create_table_sql):
-#     """ create a table from the create_table_sql statement
-#     :param conn: Connection object
-#     :param create_table_sql: a CREATE TABLE statement
-#     :return:
-#     """
-#     try:
-#         c = conn.cursor()
-#         c.execute(create_table_sql)
-#     except Error as e:
-#         print(e)
-
-# def main(db_name):
-#     database = 'variant.db'
-
-#     # create a database connection
-#     sql_create_projects_table = """ CREATE TABLE IF NOT EXISTS projects (
-#                                         CHROM text,
-#                                         POS integer,
-#                                         ID text,
-#                                         REF text,
-#                                         ALT text,
-#                                         Gene text,
-#                                         VC text,
-#                                         Accession text
-#                                     ); """
-
-#     conn = create_connection(database)
-
-#     # create tables
-#     if conn is not None:
-#         # create projects table
-#         create_table(conn, sql_create_projects_table)
-
-#     else:
-#         print("Error! cannot create the database connection.")
+import pandas as pd
+import urllib
+from io import StringIO
 
 def create_db(db_name, annotated_df):
     
-    conn = None
-    try:
-        conn = sqlite3.connect(db_name)
-        return conn
-    except Error as e:
-        print(e)
+    conn = sqlite3.connect(db_name)
 
     sql_create_variants_table = """ CREATE TABLE IF NOT EXISTS variants (
                                         CHROM text,
@@ -82,20 +18,53 @@ def create_db(db_name, annotated_df):
                                         Accession text
                                     ); """
 
-    try:
-        c = conn.cursor()
-        c.execute(sql_create_variants_table)
-    except Error as e:
-        print(e)
+    c = conn.cursor()
+    c.execute(sql_create_variants_table)
+    annotated_df.to_sql('variants', conn, if_exists='replace', index = False )
+    conn.close()
 
-    annotated_df.to_sql('variants', conn, if_exists='replace' )
+    return None
 
-    c.execute('SELECT DISTINCT Gene FROM variants')
+def get_uniprot_sequences(gene_list) -> pd.DataFrame:
+        """
+        Retrieve uniprot sequences based on a list of uniprot sequence identifier.
 
-    rows = c.fetchall()
+        For large lists it is recommended to perform batch retrieval.
 
-    return rows
+        documentation which columns are available:
+        https://www.uniprot.org/help/uniprotkb%5Fcolumn%5Fnames
 
+        this python script is based on
+        https://www.biostars.org/p/67822/
 
+        Parameters:
+            uniprot_ids: List, list of uniprot identifier
 
+        Returns:
+            pd.DataFrame, pandas dataframe with uniprot id column and sequence
+        """
+        
+        url = 'https://www.uniprot.org/uploadlists/'  # This is the webserver to retrieve the Uniprot data
+        params = {
+            'from': "GENENAME",
+            'to': 'ACC',
+            'format': 'tab',
+            'query': " ".join(gene_list),
+            'columns': 'id,sequence'}
 
+        data = urllib.parse.urlencode(params)
+        data = data.encode('ascii')
+        request = urllib.request.Request(url, data)
+        with urllib.request.urlopen(request) as response:
+            res = response.read()
+        df_fasta = pd.read_csv(StringIO(res.decode("utf-8")), sep="\t")
+        df_fasta.columns = ["Entry", "Sequence", "Query"]
+        # it might happen that 2 different ids for a single query id are returned, split these rows
+        return df_fasta.assign(Query=df_fasta['Query'].str.split(',')).explode('Query')
+
+def process_uniprot(df):
+    df = df.drop_duplicates(subset = 'Query', keep='first')
+    df = df[["Query", "Entry", "Sequence"]]
+    df.rename(columns = {'Query':'Gene', 'Entry':'Uniprot ID'}, inplace = True)
+
+    return df    
